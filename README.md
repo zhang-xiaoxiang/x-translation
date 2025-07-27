@@ -1,6 +1,6 @@
 # x-translation
 
-一款性能中等儿偏下的java翻译插件(github提交测试)
+一款性能中等儿偏下的java翻译插件
 
 <!-- PROJECT SHIELDS -->
 
