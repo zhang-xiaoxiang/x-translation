@@ -76,7 +76,7 @@ maven引入
 <dependency>
     <groupId>io.github.zhang-xiaoxiang</groupId>
     <artifactId>x-translation-core</artifactId>
-    <version>1.0.5</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 

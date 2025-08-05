@@ -4,7 +4,7 @@
     <parent>
         <groupId>io.github.zhang-xiaoxiang</groupId>
         <artifactId>x-translation</artifactId>
-        <version>1.0.5</version>
+        <version>1.0.0</version>
     </parent>
 
     <artifactId>x-translation-spring-boot-start</artifactId>
@@ -20,7 +20,7 @@
         <dependency>
             <groupId>io.github.zhang-xiaoxiang</groupId>
             <artifactId>x-translation-core</artifactId>
-            <version>1.0.5</version>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
