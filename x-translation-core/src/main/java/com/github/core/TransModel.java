@@ -20,6 +20,16 @@ public class TransModel {
 
     /**
      * object value 提取标识
+     * <p>
+     * // 假设翻译数据为: {1: {status: 1, desc: "正常"}}
+     * // transVal = 1 (原始值)
+     * // key = "desc" (指定要提取的字段)
+     * // 结果: objValue = "正常" (提取desc字段的值)
+     * <p>
+     * // 假设翻译数据为: {1001: {id: 1001, name: "张三", age: 25}}
+     * // transVal = 1001 (原始值)
+     * // key = "#val" (表示提取整个值)
+     * // 结果: objValue = {id: 1001, name: "张三", age: 25} (提取整个对象)
      */
     public final static String VAL_EXTRACT = "#val";
 
