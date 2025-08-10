@@ -52,7 +52,7 @@ public class TransFieldMeta {
     private List<TransFieldMeta> children;
 
     /**
-     * TransFieldMeta的构造函数
+     * TransFieldMeta的构造函数(构造方法过多就改成构造器模式的赋值方式)
      *
      * @param field      目标字段
      * @param transField 转换字段
