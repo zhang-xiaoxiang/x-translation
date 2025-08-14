@@ -62,6 +62,7 @@ public class TransUtil implements ApplicationContextAware {
 
     /**
      * TransService 持有者（单例模式的体现）<p>
+     * 这个代码使用了双重检查锁定模式（Double-Checked Locking Pattern）的一个变种，也可以说是延迟初始化Holder类模式。
      * 已经考虑过的3点
      * <p>
      * 1并发风险低：

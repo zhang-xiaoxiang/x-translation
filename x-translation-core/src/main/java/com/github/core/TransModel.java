@@ -154,7 +154,7 @@ public class TransModel {
             // 处理多值场景（集合或数组）
             // 获取多个转换值
             List<Object> multipleTransVal = getMultipleTransVal();
-            // 获取对象值（根据目标字段类型创建合适的容器）
+            // 获取对象值（根据目标字段类型创建合适的容器）相当于 new 对象的操作
             objValue = getObjValue(multipleTransVal);
 
             // 根据目标字段的具体类型进行处理

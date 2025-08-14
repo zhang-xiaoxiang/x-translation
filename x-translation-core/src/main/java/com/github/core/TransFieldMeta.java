@@ -46,12 +46,28 @@ public class TransFieldMeta {
     private final Class<? extends TransRepository> repository;
 
     /**
-     * 子属性
+     * 子属性(处理嵌套翻译)
+     * public class UserDto {
+     * private String userId;
+     *
+     * @Trans(type = UserTransRepository.class, key = "userName")
+     * private String userName;
+     * <p>
+     * // 嵌套对象
+     * private DepartmentDto department;
+     * }
+     * <p>
+     * public class DepartmentDto {
+     * private String deptId;
+     * @Trans(type = DeptTransRepository.class, key = "deptName")
+     * private String deptName;
+     * }
      */
     @Setter
     private List<TransFieldMeta> children;
 
     /**
+     * 就是把需要的字段信息封装成TransFieldMeta
      * TransFieldMeta的构造函数(构造方法过多就改成构造器模式的赋值方式)
      *
      * @param field      目标字段

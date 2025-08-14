@@ -119,6 +119,7 @@ public class TransClassMeta implements Serializable {
             if (transAnno == null) {
                 // 获取字段上所有的直接注解
                 Annotation[] annotations = field.getDeclaredAnnotations();
+                // 处理嵌套注解的情况，即一个字段上可能有多个注解，其中一个或多个注解可能包含 @Trans 注解
                 for (Annotation annotation : annotations) {
                     // 获取注解的类型
                     Class<? extends Annotation> annotationType = annotation.annotationType();
@@ -137,28 +138,30 @@ public class TransClassMeta implements Serializable {
                         break; // 找到第一个匹配的就退出循环(因为最多只有1个)
                     }
                 }
-                // 如果字段有 Trans 注解，直接获取 trans、key 和 repository 属性
             } else {
+                // 如果字段有 Trans 注解，直接获取 trans、key 和 repository 属性
                 repository = transAnno.using();
                 trans = transAnno.trans();
                 key = transAnno.key();
             }
             if (StringUtils.isEmpty(trans)) {
+                // 没有翻译字段继续递归
                 continue;
             }
             if (!fieldNameMap.containsKey(trans)) {
+                //  如果翻译字段不存在 则跳过当前字段
                 continue;
             }
             if (StringUtils.isEmpty(key)) {
                 // 约定优于配置：提供合理的默认行为，如果key为空则使用字段名作为键值
                 // 例如   @Trans(trans = "userName", key = "userId", using = UserTransRepository.class)
-                // 等价于 @Trans(trans = "userName", using = UserTransRepository.class),若果不是userId,入uId,那么就手动指定即可
+                // 等价于 @Trans(trans = "userName", using = UserTransRepository.class),若果不是userId,key可以直接省略,不是uId,那么就手动指定即可
                 key = field.getName();
             }
             // 将解析到的Trans字段信息添加到列表中
             transFieldMetas.add(new TransFieldMeta(field, fieldNameMap.get(trans), key, repository, transAnnotation));
         }
-        // 构建Trans字段的解析树
+        // 构建Trans字段的解析树,也是处理嵌套翻译场景
         this.transFieldMetaList = buildTransTree(transFieldMetas);
     }
 
@@ -178,11 +181,14 @@ public class TransClassMeta implements Serializable {
      * @return 构建好的Trans字段解析树
      */
     private List<TransFieldMeta> buildTransTree(List<TransFieldMeta> transFieldMetas) {
-        Map<String, List<TransFieldMeta>> tempMap = transFieldMetas.stream().collect(Collectors.groupingBy(TransFieldMeta::getTrans));
-        Map<String, List<TransFieldMeta>> nameMap = transFieldMetas.stream().collect(Collectors.groupingBy(x -> x.getField().getName()));
+        Map<String, List<TransFieldMeta>> transMap = transFieldMetas.stream().collect(Collectors.groupingBy(TransFieldMeta::getTrans));
+        Map<String, List<TransFieldMeta>> filedNameMap = transFieldMetas.stream().collect(Collectors.groupingBy(x -> x.getField().getName()));
 
-        return transFieldMetas.stream().filter(m -> !nameMap.containsKey(m.getTrans()))
-                .peek(m -> findChildren(Collections.singletonList(m), tempMap)).collect(toList());
+        return transFieldMetas
+                .stream()
+                .filter(m -> !filedNameMap.containsKey(m.getTrans()))
+                .peek(m -> findChildren(Collections.singletonList(m), transMap))
+                .collect(toList());
     }
 
     /**
@@ -196,11 +202,13 @@ public class TransClassMeta implements Serializable {
      * @param tempMap 临时映射表，用于存储字段名到TransFieldMeta列表的映射关系
      */
     public static void findChildren(List<TransFieldMeta> root, Map<String, List<TransFieldMeta>> tempMap) {
-        root.stream().filter(x -> tempMap.containsKey(x.getField().getName())).forEach(x -> {
-            List<TransFieldMeta> children = tempMap.get(x.getField().getName());
-            x.setChildren(children);
-            findChildren(children, tempMap);
-        });
+        root.stream()
+                .filter(x -> tempMap.containsKey(x.getField().getName()))
+                .forEach(x -> {
+                    List<TransFieldMeta> children = tempMap.get(x.getField().getName());
+                    x.setChildren(children);
+                    findChildren(children, tempMap);
+                });
     }
 
     /**

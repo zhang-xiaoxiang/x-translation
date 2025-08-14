@@ -32,6 +32,7 @@ public class TransService {
     @Setter
     private ExecutorService executor;
 
+    // 在Java中，volatile关键字用于多线程环境下的变量可见性控制
     private volatile boolean isInit = false;
 
     /**
@@ -44,6 +45,7 @@ public class TransService {
         if (this.executor == null) {
             this.executor = Executors.newCachedThreadPool(r -> new Thread(r, "trans-thread-" + r.hashCode()));
         }
+        // 这个方法会将isInit设置为true，表示TransService已经初始化完成。
         isInit = true;
     }
 
@@ -53,22 +55,29 @@ public class TransService {
      */
     public boolean trans(Object obj) {
         if (!isInit) {
+            // 如果线程池没有准备好,那么就无法进行翻译操作,直接返回false
             return false;
         }
+        // 获取解析对象
         obj = resolveObj(obj);
         if (obj == null) {
+            // 解析的对象为空,当然不用翻译
             return false;
         }
         List<Object> objList = CollectionUtils.objToList(obj);
         if (CollectionUtils.isEmpty(objList)) {
+            // 空集合当然也不用翻译
             return false;
         }
         Class<?> objClass = objList.get(0).getClass();
         if (objClass.getName().startsWith("java.")) {
+            // 跳过Java内置类（如String、Integer、List等 这些类通常不包含需要翻译的业务字段,提高点新能
             return false;
         }
+        // 因为是一种类型,说以这里取objClass即可
         TransClassMeta info = TransClassMetaCacheManager.getTransClassMeta(objClass);
         if (!info.needTrans()) {
+            // 检查对象类是否包含需要翻译的字段
             return false;
         }
         // 执行翻译赋值的核心方法
@@ -77,7 +86,7 @@ public class TransService {
     }
 
     /**
-     * 解析对象
+     * 解析对象(一般就是controller层封装的Result(code/msg/data)对象)
      *
      * @param obj 需要解析的对象
      * @return 解析后的对象，如果对象无法解析或为空，则返回原对象
@@ -86,17 +95,22 @@ public class TransService {
         if (obj == null) {
             return null;
         }
+        // 通过EasyTransRegister取到使用方的包装类(可以是多个)
         List<TransObjResolver> resolvers = TransObjResolverFactory.getResolvers();
+        // 判断是否需要解析
         boolean resolve = false;
         Object resolvedObj = obj;
         for (TransObjResolver resolver : resolvers) {
             if (resolver.support(obj)) {
                 resolvedObj = resolver.resolveTransObj(obj);
+                // for循环中一旦找到能处理当前对象的解析器就立即break跳出，因为递归调用会继续对解析后的对象进行同样的查找过程，所以每次只需要找到第一个匹配的解析器即可，不需要遍历所有解析器。
                 resolve = true;
                 break;
             }
         }
         if (resolve) {
+            // 处理嵌套翻译,例如 Result<Page<UserDto>> result = new Result<>();
+            // 解析完Result继续解析Page,就是这个流程递归
             resolvedObj = resolveObj(resolvedObj);
         }
         return resolvedObj;
@@ -105,7 +119,7 @@ public class TransService {
     /**
      * 执行转换操作
      *
-     * @param objList           待转换的对象列表
+     * @param objList            待转换的对象列表
      * @param transFieldMetaList 包含转换字段信息的列表
      */
     private void doTrans(List<Object> objList, List<TransFieldMeta> transFieldMetaList) {
@@ -134,8 +148,8 @@ public class TransService {
     /**
      * 执行转换操作
      *
-     * @param objList 待转换的对象列表
-     * @param transClass 转换仓库类
+     * @param objList     待转换的对象列表
+     * @param transClass  转换仓库类
      * @param transFields 包含转换字段信息的列表
      */
     private void doTrans(List<Object> objList, Class<? extends TransRepository> transClass, List<TransFieldMeta> transFields) {
@@ -143,10 +157,12 @@ public class TransService {
         if (transRepository == null) {
             return;
         }
+        // 获取需要被翻译的集合Map<trans, List < TransModel>>
         Map<String, List<TransModel>> toTransMap = getToTransMap(objList, transFields);
         if (CollectionUtils.isNotEmpty(toTransMap)) {
             doTrans0(transRepository, toTransMap);
         }
+        // 处理嵌套翻译
         transFields.forEach(transField -> {
             if (CollectionUtils.isNotEmpty(transField.getChildren())) {
                 doTrans(objList, transField.getChildren());
@@ -177,7 +193,7 @@ public class TransService {
      * 执行转换操作（具体实现）
      *
      * @param transRepository 转换仓库
-     * @param toTransMap 需要转换的模型映射，键为转换标识，值为模型列表
+     * @param toTransMap      需要转换的模型映射，键为转换标识，值为模型列表
      */
     private void doTrans0(TransRepository transRepository, Map<String, List<TransModel>> toTransMap) {
         // 分组查询
@@ -204,15 +220,15 @@ public class TransService {
     private void doTrans(TransRepository transRepository, List<TransModel> transModels) {
         // 获取所有转换模型中需要转换的值，去重后存入List
         List<Object> transValues = transModels.stream()
-                                                .map(TransModel::getMultipleTransVal)
-                                                .flatMap(Collection::stream)
-                                                .distinct()
-                                                .collect(Collectors.toList());
+                .map(TransModel::getMultipleTransVal)
+                .flatMap(Collection::stream)
+                .distinct()
+                .collect(Collectors.toList());
 
         // 获取转换注解
         Annotation transAnno = transModels.get(0).getTransField().getTransAnno();
 
-        // 获取转换值映射
+        // 获取转换值映射(使用者提供的数据源) userId -> userDO(数据库实体的对象)
         Map<Object, Object> valueMap = transRepository.getTransValueMap(transValues, transAnno);
 
         // 如果转换值映射不为空
