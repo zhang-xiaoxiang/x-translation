@@ -20,7 +20,7 @@ public interface TransObjResolver {
     /**
      * 解析包装对象，获取需要翻译的对象
      *
-     * @param obj 原包装对象 如:Result<UserVO>
+     * @param obj 原包装对象 如:Result UserVO
      * @return 需要翻译的对象 如:UserVO
      */
     Object resolveTransObj(Object obj);
