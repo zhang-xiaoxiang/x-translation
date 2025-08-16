@@ -48,7 +48,7 @@
         <dependencies>
             <dependency>
                 <groupId>io.github.zhang-xiaoxiang.xtranslation</groupId>
-                <artifactId>x-translation</artifactId>
+                <artifactId>x-translation-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
