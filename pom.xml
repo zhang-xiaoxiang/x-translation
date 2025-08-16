@@ -3,7 +3,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.github.zhang-xiaoxiang</groupId>
+    <groupId>io.github.zhang-xiaoxiang.xtranslation</groupId>
     <artifactId>x-translation</artifactId>
     <version>1.0.0</version>
     <packaging>pom</packaging>
@@ -35,7 +35,7 @@
 
     <modules>
         <module>x-translation-core</module>
-        <module>x-translation-spring-boot-start</module>
+        <module>x-translation-spring-boot-starter</module>
     </modules>
 
     <properties>
@@ -47,13 +47,13 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>io.github.zhang-xiaoxiang</groupId>
+                <groupId>io.github.zhang-xiaoxiang.xtranslation</groupId>
                 <artifactId>x-translation</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>io.github.zhang-xiaoxiang</groupId>
-                <artifactId>x-translation-spring-boot-start</artifactId>
+                <groupId>io.github.zhang-xiaoxiang.xtranslation</groupId>
+                <artifactId>x-translation-spring-boot-starter</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>
