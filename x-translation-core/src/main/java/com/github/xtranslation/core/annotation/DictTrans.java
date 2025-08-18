@@ -15,7 +15,7 @@ import java.lang.annotation.Target;
  * @author zhangxiaoxiang
  * @since 2025/7/27
  */
-@Trans(using = DictTransRepository.class, key = TransModel.VAL_EXTRACT)
+@Trans(repository = DictTransRepository.class, transField = TransModel.VAL_EXTRACT)
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface DictTrans {

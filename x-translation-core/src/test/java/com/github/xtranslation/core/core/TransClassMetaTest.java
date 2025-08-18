@@ -9,7 +9,7 @@ import java.util.List;
 class TransClassMetaTest {
 
     @Test
-    void getTransField() {
+    void getTransKeyField() {
         TransClassMeta transClassMeta = new TransClassMeta(UserDto.class);
         Assertions.assertTrue(transClassMeta.needTrans());
         List<TransFieldMeta> transFieldMeta = transClassMeta.getTransFieldList();

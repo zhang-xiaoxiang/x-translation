@@ -60,7 +60,7 @@ class TransServiceTest {
     }
 
     @Test
-    void trans() {
+    void transKey() {
         UserDto userDto = new UserDto(1L, "张三", 2L, "1", "2");
         System.out.println("翻译前：" + userDto);
         transService.trans(userDto);
@@ -79,7 +79,7 @@ class TransServiceTest {
     }
 
     @Test
-    void trans2() {
+    void transKey2() {
         List<Long> teacherIds = new ArrayList<>();
         teacherIds.add(1L);
         teacherIds.add(2L);
@@ -109,7 +109,7 @@ class TransServiceTest {
     }
 
     @Test
-    void trans3() {
+    void transKey3() {
         List<Long> teacherIds = new ArrayList<>();
         teacherIds.add(1L);
         teacherIds.add(2L);

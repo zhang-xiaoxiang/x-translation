@@ -29,7 +29,7 @@ public class UserDto2 {
     @TeacherTrans(trans = "teacherIds", key = "subjectId")
     private List<Long> subjectIds;
 
-    @Trans(using = SubjectTransRepository.class, trans = "subjectIds", key = "name")
+    @Trans(repository = SubjectTransRepository.class, transKey = "subjectIds", transField = "name")
     private List<String> subjectNames;
 
     public UserDto2(Long id, String name, List<Long> teacherIds, List<String> jobIds) {

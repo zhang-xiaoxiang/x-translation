@@ -145,12 +145,11 @@ public class TransClassMeta implements Serializable {
                     transAnno = annotationType.getAnnotation(Trans.class);
                     if (transAnno != null) {
                         // 如果找到了被 @Trans 标记的注解，则提取相关属性
-                        repository = transAnno.using();
+                        repository = transAnno.repository();
                         // 处理 trans 属性值，优先使用注解直接定义的值，否则通过反射获取
-                        // todo trans改成枚举
-                        trans = StringUtils.isNotEmpty(transAnno.trans()) ? transAnno.trans() : (String) ReflectUtils.invokeAnnotation(annotationType, annotation, "trans");
+                        trans = StringUtils.isNotEmpty(transAnno.transKey()) ? transAnno.transKey() : (String) ReflectUtils.invokeAnnotation(annotationType, annotation,  Trans.TRANS_KEY_ATTR);
                         // 处理 key 属性值，同上
-                        key = StringUtils.isNotEmpty(transAnno.key()) ? transAnno.key() : (String) ReflectUtils.invokeAnnotation(annotationType, annotation, "key");
+                        key = StringUtils.isNotEmpty(transAnno.transField()) ? transAnno.transField() : (String) ReflectUtils.invokeAnnotation(annotationType, annotation,  Trans.TRANS_FIELD_ATTR);
                         // 保存实际的注解实例（可能是组合注解）
                         transAnnotation = annotation;
                         break; // 找到第一个匹配的就退出循环(因为最多只有1个)
@@ -158,9 +157,9 @@ public class TransClassMeta implements Serializable {
                 }
             } else {
                 // 如果字段有 Trans 注解，直接获取 trans、key 和 repository 属性
-                repository = transAnno.using();
-                trans = transAnno.trans();
-                key = transAnno.key();
+                repository = transAnno.repository();
+                trans = transAnno.transKey();
+                key = transAnno.transField();
             }
             if (StringUtils.isEmpty(trans)) {
                 // 没有翻译字段继续递归

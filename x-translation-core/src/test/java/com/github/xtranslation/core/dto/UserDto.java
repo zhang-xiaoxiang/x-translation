@@ -26,13 +26,13 @@ public class UserDto {
 
     private Long teacherId;
 
-    @Trans(trans = "teacherId", key = "name", using = TeacherTransRepository.class)
+    @Trans(transKey = "teacherId", transField = "name", repository = TeacherTransRepository.class)
     private String teacherName;
 
-    @Trans(trans = "teacherId", key = "subjectId", using = TeacherTransRepository.class)
+    @Trans(transKey = "teacherId", transField = "subjectId", repository = TeacherTransRepository.class)
     private Long subjectId;
 
-    @Trans(trans = "subjectId", using = SubjectTransRepository.class, key = "name")
+    @Trans(transKey = "subjectId", repository = SubjectTransRepository.class, transField = "name")
     private String subjectName;
 
     public UserDto(Long id, String name, Long teacherId, String sex, String job) {

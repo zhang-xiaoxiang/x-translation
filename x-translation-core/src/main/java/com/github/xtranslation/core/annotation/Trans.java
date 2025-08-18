@@ -20,18 +20,28 @@ import java.lang.annotation.Target;
 public @interface Trans {
 
     /**
-     * @return 需要翻译的字段
+     * transKey属性名常量
      */
-    String trans() default "";
+    String TRANS_KEY_ATTR = "transKey";
 
     /**
-     * @return 提取的字段
+     * transField属性名常量
      */
-    String key() default "";
+    String TRANS_FIELD_ATTR = "transField";
+
+    /**
+     * @return 待翻译的数据对应的主键key(例如:部门表主键字段deptId)
+     */
+    String transKey() default "";
+
+    /**
+     * @return 待翻译的字段对应的字段(例如:部门名称deptName)
+     */
+    String transField() default "";
 
     /**
      * @return 翻译数据获取仓库
      */
-    Class<? extends TransRepository> using();
+    Class<? extends TransRepository> repository();
 
 }

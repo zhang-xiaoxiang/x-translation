@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD})
-@Trans(using = TeacherTransRepository.class)
+@Trans(repository = TeacherTransRepository.class)
 public @interface TeacherTrans {
 
     /**
