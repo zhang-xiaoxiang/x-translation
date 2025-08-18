@@ -17,11 +17,11 @@ public interface TransRepository {
     /**
      * 获取翻译结果（适用于数据库等翻译）
      *
-     * @param transValues 需要翻译的值
-     * @param transAnno   翻译对象上的注解
+     * @param transIdList 需要翻译的ID列表
+     * @param transAnno   翻译对象上的注解(需要的字段)
      * @return 查询结果值 val-翻译值
      */
-    default Map<Object, Object> getTransValueMap(List<Object> transValues, Annotation transAnno) {
+    default Map<Object, Object> getTransValueMap(List<Object> transIdList, Annotation transAnno) {
         return Collections.emptyMap();
     }
 

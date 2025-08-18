@@ -42,7 +42,7 @@ public class EasyTransAutoConfiguration {
         TransService transService = new TransService();
         // 初始化翻译服务，加载必要的配置和数据
         transService.init();
-        log.warn("================== x-translation 启动啦1 ======================");
+        log.warn("================== x-translation 启动啦3 ======================");
         return transService;
     }
 

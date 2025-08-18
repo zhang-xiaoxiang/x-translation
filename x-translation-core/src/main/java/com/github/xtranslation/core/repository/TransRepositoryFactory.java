@@ -30,6 +30,11 @@ public class TransRepositoryFactory {
      */
     private final static Map<Class<? extends TransRepository>, TransRepository> TRANS_REPOSITORY_MAP = new ConcurrentHashMap<>();
 
+    /***
+     * 获取翻译仓库实例
+     * @param repository 翻译仓库的class
+     * @return 翻译仓库实例
+     */
     public static TransRepository getTransRepository(Class<? extends TransRepository> repository) {
         return TRANS_REPOSITORY_MAP.get(repository);
     }

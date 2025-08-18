@@ -65,7 +65,7 @@ public class TransClassMeta implements Serializable {
     public TransClassMeta(Class<?> clazz) {
         // 保存传入的类对象
         this.clazz = clazz;
-        // 解析带有Trans注解的字段
+        // 解析带有Trans注解的字段(带有递归遍历树节点等操作)
         parseTransField();
     }
 

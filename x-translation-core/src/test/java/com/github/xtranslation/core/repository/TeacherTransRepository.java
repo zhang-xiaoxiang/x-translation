@@ -12,8 +12,8 @@ import java.util.stream.Collectors;
 public class TeacherTransRepository implements TransRepository {
 
     @Override
-    public Map<Object, Object> getTransValueMap(List<Object> transValues, Annotation transAnno) {
-        return getTeachers().stream().filter(x -> transValues.contains(x.getId())).collect(Collectors.toMap(TeacherDto::getId, x -> x));
+    public Map<Object, Object> getTransValueMap(List<Object> transIdList, Annotation transAnno) {
+        return getTeachers().stream().filter(x -> transIdList.contains(x.getId())).collect(Collectors.toMap(TeacherDto::getId, x -> x));
     }
 
     public List<TeacherDto> getTeachers() {

@@ -29,12 +29,12 @@ public class DictTransRepository implements TransRepository {
     /**
      * 获取转换值映射
      *
-     * @param transValues 转换值列表
+     * @param transIdList 转换值列表
      * @param transAnno   转换注解
      * @return 转换值映射
      */
     @Override
-    public Map<Object, Object> getTransValueMap(List<Object> transValues, Annotation transAnno) {
+    public Map<Object, Object> getTransValueMap(List<Object> transIdList, Annotation transAnno) {
         // 如果dictLoader不为空，并且transAnno是DictTrans类型的实例
         if (dictLoader != null && transAnno instanceof DictTrans) {
             DictTrans dictTrans = (DictTrans) transAnno;

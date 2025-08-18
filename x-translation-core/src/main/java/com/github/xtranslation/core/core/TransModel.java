@@ -139,12 +139,12 @@ public class TransModel {
      * 3. 集合类型 vs 数组类型 vs 普通类型
      * </p>
      *
-     * @param transValMap 包含转换值和对象值的映射，键为源值，值为翻译数据对象
+     * @param idValueMap 包含转换值和对象值的映射，键为源值，值为翻译数据对象
      */
-    public void setValue(Map<Object, Object> transValMap) {
+    public void setValue(Map<Object, Object> idValueMap) {
         // 将传入的映射转换为对象值映射，便于后续字段提取
         // 这一步将翻译数据对象转换为Map格式，提高字段访问效率
-        Map<Object, ? extends Map<?, ?>> objValMap = transValMap.entrySet().stream()
+        Map<Object, ? extends Map<?, ?>> objValMap = idValueMap.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> ReflectUtils.beanToMap(entry.getValue())));
 
         Object objValue = null;
@@ -153,9 +153,9 @@ public class TransModel {
         if (this.isMultiple) {
             // 处理多值场景（集合或数组）
             // 获取多个转换值
-            List<Object> multipleTransVal = getMultipleTransVal();
+            List<Object> multipleTransVal = this.getMultipleTransVal();
             // 获取对象值（根据目标字段类型创建合适的容器）相当于 new 对象的操作
-            objValue = getObjValue(multipleTransVal);
+            objValue = this.getObjValue(multipleTransVal);
 
             // 根据目标字段的具体类型进行处理
             if (objValue instanceof Collection) {
