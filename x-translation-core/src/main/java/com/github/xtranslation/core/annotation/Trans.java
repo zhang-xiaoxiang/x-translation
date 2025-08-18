@@ -40,7 +40,7 @@ public @interface Trans {
     String transField() default "";
 
     /**
-     * @return 翻译数据获取仓库
+     * @return 翻译仓库(字典)
      */
     Class<? extends TransRepository> repository();
 
