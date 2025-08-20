@@ -1,5 +1,7 @@
 package com.github.xtranslation.core.repository;
 
+import io.vavr.control.Option;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -40,10 +42,7 @@ public class TransRepositoryFactory {
     }
 
     public static void register(TransRepository transRepository) {
-        if (transRepository == null) {
-            return;
-        }
-        TRANS_REPOSITORY_MAP.put(transRepository.getClass(), transRepository);
+        Option.of(transRepository).forEach(repo -> TRANS_REPOSITORY_MAP.put(repo.getClass(), repo));
     }
 
 }

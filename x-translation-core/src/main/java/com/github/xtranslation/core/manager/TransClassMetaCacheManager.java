@@ -2,10 +2,13 @@ package com.github.xtranslation.core.manager;
 
 
 import com.github.xtranslation.core.core.TransClassMeta;
+import io.vavr.control.Option;
 
 import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+
 
 /**
  * TransClassMetaCacheManager: TransClassMeta缓存管理器
@@ -66,21 +69,18 @@ public class TransClassMetaCacheManager implements Serializable {
      */
     public static TransClassMeta getTransClassMeta(Class<?> clazz) {
         // 1. 尝试从缓存中获取已存在的TransClassMeta对象
-        TransClassMeta temp = CACHE.get(clazz.getName());
-
         // 2. 如果缓存中不存在该类的元数据
-        if (null == temp) {
-            // 3. 创建新的TransClassMeta对象并解析类的元数据
-            temp = new TransClassMeta(clazz);
-
-            // 4. 只缓存需要翻译的类，避免无意义的内存占用
-            // 这是一个重要的优化点：不需要翻译的类不会被缓存
-            if (temp.needTrans()) {
-                CACHE.put(clazz.getName(), temp);
-            }
-        }
-
+        // 3. 创建新的TransClassMeta对象并解析类的元数据
+        // 4. 只缓存需要翻译的类，避免无意义的内存占用
+        // 这是一个重要的优化点：不需要翻译的类不会被缓存
         // 5. 返回TransClassMeta对象（无论是从缓存获取还是新创建的）
-        return temp;
+        return Option.of(CACHE.get(clazz.getName()))
+                .getOrElse(() -> {
+                    TransClassMeta temp = new TransClassMeta(clazz);
+                    Option.of(temp)
+                            .filter(TransClassMeta::needTrans)
+                            .forEach(meta -> CACHE.put(clazz.getName(), meta));
+                    return temp;
+                });
     }
 }

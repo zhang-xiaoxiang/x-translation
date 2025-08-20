@@ -8,6 +8,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
+import static io.vavr.API.*;
+import static io.vavr.Predicates.instanceOf;
+
 /**
  * EasyTransRegister: 翻译组件自动注册器
  * <p>
@@ -46,18 +49,24 @@ public class EasyTransRegister implements BeanPostProcessor {
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
         // 检查是否为 TransRepository 实现类
-        if (bean instanceof TransRepository) {
-            // 注册到 TransRepositoryFactory 工厂中
-            TransRepositoryFactory.register((TransRepository) bean);
-            log.info("TransRepository: {} 数据仓库已注册", beanName);
-        }
-        // 检查是否为 TransObjResolver 实现类
-        else if (bean instanceof TransObjResolver) {
-            // 注册到 TransObjResolverFactory 工厂中
-            TransObjResolverFactory.register((TransObjResolver) bean);
-            log.info("TransObjResolver: {} 包装器已注册", beanName);
-        }
-        // 返回未修改的 Bean 实例
+        Match(bean).of(
+                Case($(instanceOf(TransRepository.class)), repo -> {
+                    // 注册到 TransRepositoryFactory 工厂中
+                    TransRepositoryFactory.register( repo);
+                    log.info("TransRepository: {} 数据仓库已注册", beanName);
+                    return repo;
+                }),
+                Case($(instanceOf(TransObjResolver.class)), resolver -> {
+                    // 注册到 TransObjResolverFactory 工厂中
+                    TransObjResolverFactory.register(resolver);
+                    log.info("TransObjResolver: {} 包装器已注册", beanName);
+                    return resolver;
+                }),
+                // 默认情况，返回未修改的 Bean 实例
+                Case($(), b -> b)
+        );
+
+        // (我们并不需要Match表达式的返回值,只是利用它来进行类型匹配和执行相应的注册逻辑。)返回未修改的 Bean 实例
         return bean;
     }
 
