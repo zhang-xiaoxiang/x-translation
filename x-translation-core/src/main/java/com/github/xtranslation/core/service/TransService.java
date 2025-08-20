@@ -2,7 +2,6 @@ package com.github.xtranslation.core.service;
 
 
 import cn.hutool.core.collection.CollUtil;
-import com.github.xtranslation.core.core.TransClassMeta;
 import com.github.xtranslation.core.core.TransFieldMeta;
 import com.github.xtranslation.core.core.TransModel;
 import com.github.xtranslation.core.manager.TransClassMetaCacheManager;
@@ -11,16 +10,20 @@ import com.github.xtranslation.core.repository.TransRepositoryFactory;
 import com.github.xtranslation.core.resolver.TransObjResolver;
 import com.github.xtranslation.core.resolver.TransObjResolverFactory;
 import com.github.xtranslation.core.util.CollectionUtils;
+import io.vavr.Tuple;
+import io.vavr.control.Option;
 import lombok.Setter;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+
 
 /**
  * TransService: 翻译服务类，用于将对象中的字段值翻译成其他格式。
@@ -43,9 +46,8 @@ public class TransService {
      * 最后，将isInit标记为true，表示已经初始化。
      */
     public void init() {
-        if (this.executor == null) {
-            this.executor = Executors.newCachedThreadPool(r -> new Thread(r, "trans-thread-" + r.hashCode()));
-        }
+        // 使用Option处理executor为null的情况
+        Option.of(this.executor).onEmpty(() -> this.executor = Executors.newCachedThreadPool(r -> new Thread(r, "trans-thread-" + r.hashCode())));
         // 这个方法会将isInit设置为true，表示TransService已经初始化完成。
         isInit = true;
     }
@@ -55,37 +57,31 @@ public class TransService {
      * @return 是否翻译成功
      */
     public boolean trans(Object obj) {
-        // 如果线程池没有准备好,那么就无法进行翻译操作,直接返回false
-        if (!isInit) {
-            return false;
-        }
-        // 获取解析对象
-        obj = resolveObj(obj);
-
-        // 解析的对象为空,当然不用翻译
-        if (obj == null) {
-            return false;
-        }
-        // VO字段对应的List<xxxVO>对象
-        List<Object> needTransVOList = CollectionUtils.objToList(obj);
-        if (CollUtil.isEmpty(needTransVOList)) {
-            // 空集合当然也不用翻译
-            return false;
-        }
-        Class<?> objClass = needTransVOList.get(0).getClass();
-        if (objClass.getName().startsWith("java.")) {
-            // 跳过Java内置类（如String、Integer、List等 这些类通常不包含需要翻译的业务字段,提高点新能
-            return false;
-        }
-        // 因为是一种类型,说以这里取objClass即可
-        TransClassMeta needTransMetaInfo = TransClassMetaCacheManager.getTransClassMeta(objClass);
-        if (!needTransMetaInfo.needTrans()) {
-            // 检查对象类是否包含需要翻译的字段
-            return false;
-        }
-        // 执行翻译赋值的核心方法(待翻译列表和对应的翻译原字段列表)
-        this.doTrans(needTransVOList, needTransMetaInfo.getTransFieldList());
-        return true;
+        // 检查线程池是否准备好，并且对象解析后不为空
+        return Option.of(obj)
+                // 线程池是否准备好
+                .filter(o -> isInit)
+                // 解析对象
+                .map(this::resolveObj)
+                // 解析后的对象不为空
+                .filter(Objects::nonNull)
+                // 转换为列表
+                .map(CollectionUtils::objToList)
+                // 列表不为空
+                .filter(CollUtil::isNotEmpty)
+                // 不是Java内置类(排除几乎不可能翻译的类型,例如String,Integer等)
+                .filter(list -> !list.get(0).getClass().getName().startsWith("java."))
+                // 获取元数据信息
+                .map(list -> Tuple.of(list, TransClassMetaCacheManager.getTransClassMeta(list.get(0).getClass())))
+                // 检查是否需要翻译
+                .filter(tuple -> tuple._2.needTrans())
+                .map(tuple -> {
+                    // 执行翻译赋值的核心方法
+                    this.doTrans(tuple._1, tuple._2.getTransFieldList());
+                    return true;
+                })
+                // 默认返回false
+                .getOrElse(false);
     }
 
     /**
@@ -95,28 +91,26 @@ public class TransService {
      * @return 解析后的对象，如果对象无法解析或为空，则返回原对象
      */
     private Object resolveObj(Object obj) {
-        if (obj == null) {
-            return null;
-        }
-        // 通过EasyTransRegister取到使用方的包装类(可以是多个)
-        List<TransObjResolver> resolvers = TransObjResolverFactory.getResolvers();
-        // 判断是否需要解析
-        boolean resolve = false;
-        Object resolvedObj = obj;
-        for (TransObjResolver resolver : resolvers) {
-            if (resolver.support(obj)) {
-                resolvedObj = resolver.resolveTransObj(obj);
-                // for循环中一旦找到能处理当前对象的解析器就立即break跳出，因为递归调用会继续对解析后的对象进行同样的查找过程，所以每次只需要找到第一个匹配的解析器即可，不需要遍历所有解析器。
-                resolve = true;
-                break;
-            }
-        }
-        if (resolve) {
-            // 处理嵌套翻译,例如 Result<Page<UserDto>> result = new Result<>();
-            // 解析完Result继续解析Page,就是这个流程递归
-            resolvedObj = resolveObj(resolvedObj);
-        }
-        return resolvedObj;
+        // 使用Option处理null值检查
+        return Option.of(obj)
+                .map(o -> {
+                    // 通过EasyTransRegister取到使用方的包装类(可以是多个)
+                    List<TransObjResolver> resolvers = TransObjResolverFactory.getResolvers();
+
+                    // 查找第一个支持该对象的解析器并处理
+                    return resolvers.stream()
+                            .filter(resolver -> resolver.support(o))
+                            .findFirst()
+                            .map(resolver -> {
+                                // 解析对象
+                                Object resolvedObj = resolver.resolveTransObj(o);
+                                // 递归处理嵌套翻译
+                                return resolveObj(resolvedObj);
+                            })
+                            // 如果没有找到支持的解析器，返回原对象
+                            .orElse(o);
+                })
+                .getOrNull();
     }
 
     /**
@@ -156,21 +150,23 @@ public class TransService {
      * @param transFieldMetaList 对应翻译元字段列表
      */
     private void doTrans(List<Object> needTransVOList, Class<? extends TransRepository> transClass, List<TransFieldMeta> transFieldMetaList) {
-        TransRepository transRepository = TransRepositoryFactory.getTransRepository(transClass);
-        if (transRepository == null) {
-            return;
-        }
-        // 获取需要被翻译的集合Map<trans, List < TransModel>>
-        Map<String, List<TransModel>> transMap = this.getTransMap(needTransVOList, transFieldMetaList);
-        if (CollUtil.isNotEmpty(transMap)) {
-            doTrans0(transRepository, transMap);
-        }
-        // 有嵌套属性,就继续翻译
-        transFieldMetaList.forEach(transField -> {
-            if (CollUtil.isNotEmpty(transField.getChildren())) {
-                doTrans(needTransVOList, transField.getChildren());
-            }
-        });
+        Option.of(TransRepositoryFactory.getTransRepository(transClass))
+                .forEach(transRepository -> {
+                    // 获取需要被翻译的集合Map<trans, List < TransModel>>
+                    Map<String, List<TransModel>> transMap = this.getTransMap(needTransVOList, transFieldMetaList);
+
+                    // 使用Option处理transMap非空情况
+                    Option.of(transMap)
+                            .filter(CollUtil::isNotEmpty)
+                            .forEach(map -> doTrans0(transRepository, map));
+
+                    // 有嵌套属性,就继续翻译
+                    transFieldMetaList.forEach(transField ->
+                            Option.of(transField.getChildren())
+                                    .filter(CollUtil::isNotEmpty)
+                                    .forEach(children -> doTrans(needTransVOList, children))
+                    );
+                });
     }
 
     /**
@@ -239,10 +235,11 @@ public class TransService {
         Map<Object, Object> valueMap = transRepository.getTransValueMap(transIdList, transAnno);
 
         // 如果转换值映射不为空
-        if (CollUtil.isNotEmpty(valueMap)) {
-            // 遍历转换模型，设置转换后的值
-            transModels.forEach(transModel -> transModel.setValue(valueMap));
-        }
+        Option.of(valueMap)
+                .filter(CollUtil::isNotEmpty)
+                // 遍历转换模型，设置转换后的值
+                .peek(map -> transModels.forEach(transModel -> transModel.setValue(map)));
+
     }
 
 
