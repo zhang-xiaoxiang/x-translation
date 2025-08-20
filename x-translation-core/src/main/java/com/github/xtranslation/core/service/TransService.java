@@ -1,6 +1,7 @@
 package com.github.xtranslation.core.service;
 
 
+import cn.hutool.core.collection.CollUtil;
 import com.github.xtranslation.core.core.TransClassMeta;
 import com.github.xtranslation.core.core.TransFieldMeta;
 import com.github.xtranslation.core.core.TransModel;
@@ -54,19 +55,20 @@ public class TransService {
      * @return 是否翻译成功
      */
     public boolean trans(Object obj) {
+        // 如果线程池没有准备好,那么就无法进行翻译操作,直接返回false
         if (!isInit) {
-            // 如果线程池没有准备好,那么就无法进行翻译操作,直接返回false
             return false;
         }
         // 获取解析对象
         obj = resolveObj(obj);
+
+        // 解析的对象为空,当然不用翻译
         if (obj == null) {
-            // 解析的对象为空,当然不用翻译
             return false;
         }
         // VO字段对应的List<xxxVO>对象
         List<Object> needTransVOList = CollectionUtils.objToList(obj);
-        if (CollectionUtils.isEmpty(needTransVOList)) {
+        if (CollUtil.isEmpty(needTransVOList)) {
             // 空集合当然也不用翻译
             return false;
         }
@@ -120,8 +122,8 @@ public class TransService {
     /**
      * 执行转换操作
      *
-     * @param needTransVOList           需要转换的VO对象列表
-     * @param transFieldMetaList        对应翻译元字段列表
+     * @param needTransVOList    需要转换的VO对象列表
+     * @param transFieldMetaList 对应翻译元字段列表
      */
     private void doTrans(List<Object> needTransVOList, List<TransFieldMeta> transFieldMetaList) {
         // 将转换字段信息按仓库类分组
@@ -149,8 +151,8 @@ public class TransService {
     /**
      * 执行转换操作
      *
-     * @param needTransVOList     需要转换的VO对象列表
-     * @param transClass  转换仓库类
+     * @param needTransVOList    需要转换的VO对象列表
+     * @param transClass         转换仓库类
      * @param transFieldMetaList 对应翻译元字段列表
      */
     private void doTrans(List<Object> needTransVOList, Class<? extends TransRepository> transClass, List<TransFieldMeta> transFieldMetaList) {
@@ -160,12 +162,12 @@ public class TransService {
         }
         // 获取需要被翻译的集合Map<trans, List < TransModel>>
         Map<String, List<TransModel>> transMap = this.getTransMap(needTransVOList, transFieldMetaList);
-        if (CollectionUtils.isNotEmpty(transMap)) {
+        if (CollUtil.isNotEmpty(transMap)) {
             doTrans0(transRepository, transMap);
         }
         // 有嵌套属性,就继续翻译
         transFieldMetaList.forEach(transField -> {
-            if (CollectionUtils.isNotEmpty(transField.getChildren())) {
+            if (CollUtil.isNotEmpty(transField.getChildren())) {
                 doTrans(needTransVOList, transField.getChildren());
             }
         });
@@ -174,7 +176,7 @@ public class TransService {
     /**
      * 获取需要翻译的集合
      *
-     * @param needTransVOList     需要被翻译的对象集合
+     * @param needTransVOList    需要被翻译的对象集合
      * @param transFieldMetaList 需要被翻译的属性
      * @return 需要被翻译的集合Map<trans, List < TransModel>>
      */
@@ -195,7 +197,7 @@ public class TransService {
      * 把需要翻译的在总数据数据仓库仅需对比,对需要翻译的仅需赋值翻译
      *
      * @param transRepository 转换仓库
-     * @param transMap      需要转换的模型映射，键为转换标识，值为模型列表
+     * @param transMap        需要转换的模型映射，键为转换标识，值为模型列表
      */
     private void doTrans0(TransRepository transRepository, Map<String, List<TransModel>> transMap) {
         // 分组查询
@@ -237,7 +239,7 @@ public class TransService {
         Map<Object, Object> valueMap = transRepository.getTransValueMap(transIdList, transAnno);
 
         // 如果转换值映射不为空
-        if (CollectionUtils.isNotEmpty(valueMap)) {
+        if (CollUtil.isNotEmpty(valueMap)) {
             // 遍历转换模型，设置转换后的值
             transModels.forEach(transModel -> transModel.setValue(valueMap));
         }

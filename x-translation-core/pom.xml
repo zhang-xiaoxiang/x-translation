@@ -16,6 +16,28 @@
     </properties>
 
     <dependencies>
+
+
+        <!--一个使用可观察序列组成异步和基于事件的程序的库-->
+        <dependency>
+            <groupId>io.reactivex.rxjava3</groupId>
+            <artifactId>rxjava</artifactId>
+            <version>3.1.11</version>
+        </dependency>
+
+        <!--Java 的对象函数扩展，它利用不变性和函数控制结构使防御性编程变得简单-->
+        <dependency>
+            <groupId>io.vavr</groupId>
+            <artifactId>vavr</artifactId>
+            <version>0.10.7</version>
+        </dependency>
+        <!--hutool工具包-->
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+            <version>5.8.35</version>
+        </dependency>
+
         <!-- JUnit 5 -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

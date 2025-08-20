@@ -18,14 +18,14 @@ public class AutoTransAspect {
      * 后置返回通知方法，在目标方法成功执行并返回结果后调用
      * 该方法通过AOP切面拦截带有@AutoTrans注解的方法，对返回结果进行自动转换处理
      *
-     * @param methodResult 目标方法的返回结果对象
+     * @param resultWrapper 目标方法的返回结果对象 例如包含UserVO的响应包装类
      * @return 处理后的返回结果对象
      */
-    @AfterReturning(pointcut = "@annotation(com.github.xtranslation.starter.annotation.AutoTrans)", returning = "methodResult")
-    public Object afterReturning(Object methodResult) {
+    @AfterReturning(pointcut = "@annotation(com.github.xtranslation.starter.annotation.AutoTrans)", returning = "resultWrapper")
+    public Object afterReturning(Object resultWrapper) {
         // 对方法返回结果进行转换处理
-        TransUtil.trans(methodResult);
-        return methodResult;
+        TransUtil.trans(resultWrapper);
+        return resultWrapper;
     }
 
 

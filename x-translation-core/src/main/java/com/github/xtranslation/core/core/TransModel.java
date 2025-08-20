@@ -1,8 +1,9 @@
 package com.github.xtranslation.core.core;
 
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.ReflectUtil;
 import com.github.xtranslation.core.util.CollectionUtils;
-import com.github.xtranslation.core.util.ReflectUtils;
 import lombok.Getter;
 
 import java.lang.reflect.Array;
@@ -124,7 +125,7 @@ public class TransModel {
         // 预先判断是否为多值类型，提高后续处理性能
         this.isMultiple = (Iterable.class).isAssignableFrom(type) || type.isArray();
         // 提取源字段的实际值
-        this.transVal = ReflectUtils.getFieldValue(this.obj, transField);
+        this.transVal = ReflectUtil.getFieldValue(this.obj, transField);
         // 判断是否为值提取模式
         this.isValExtract = VAL_EXTRACT.equals(this.transFieldMeta.getKey());
     }
@@ -145,7 +146,7 @@ public class TransModel {
         // 将传入的映射转换为对象值映射，便于后续字段提取
         // 这一步将翻译数据对象转换为Map格式，提高字段访问效率
         Map<Object, ? extends Map<?, ?>> objValMap = idValueMap.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, entry -> ReflectUtils.beanToMap(entry.getValue())));
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> BeanUtil.beanToMap(entry.getValue())));
 
         Object objValue = null;
 
@@ -215,7 +216,7 @@ public class TransModel {
         // 如果对象值不为空，则设置对象字段的值
         if (objValue != null) {
             // 核心逻辑：设置对象字段的值
-            ReflectUtils.setFieldValue(this.obj, this.transFieldMeta.getField(), objValue);
+            ReflectUtil.setFieldValue(this.obj, this.transFieldMeta.getField(), objValue);
         }
     }
 
@@ -233,7 +234,7 @@ public class TransModel {
      */
     private Object getObjValue(List<Object> multipleTransVal) {
         // 获取对象字段的值
-        Object objValue = ReflectUtils.getFieldValue(this.obj, this.transFieldMeta.getField());
+        Object objValue = ReflectUtil.getFieldValue(this.obj, this.transFieldMeta.getField());
 
         // 如果对象字段的值为空，则根据字段类型创建合适的容器
         if (objValue == null) {

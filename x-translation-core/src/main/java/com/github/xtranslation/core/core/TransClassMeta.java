@@ -1,10 +1,12 @@
 package com.github.xtranslation.core.core;
 
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ReflectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.github.xtranslation.core.annotation.Trans;
 import com.github.xtranslation.core.repository.TransRepository;
-import com.github.xtranslation.core.util.ReflectUtils;
-import com.github.xtranslation.core.util.StringUtils;
+import io.vavr.control.Try;
 
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
@@ -115,7 +117,7 @@ public class TransClassMeta implements Serializable {
      */
     private void parseTransField() {
         // 获取类的所有字段，包括父类中的字段
-        List<Field> declaredFields = ReflectUtils.getAllField(this.clazz);
+        List<Field> declaredFields = CollUtil.toList(ReflectUtil.getFields(this.clazz));
         // 创建一个字段名称到字段对象的映射(如果出现重复键，默认保留旧值。)
         Map<String, Field> fieldNameMap = declaredFields.stream().collect(Collectors.toMap(Field::getName, x -> x, (o, n) -> o));
         int mod;
@@ -147,9 +149,9 @@ public class TransClassMeta implements Serializable {
                         // 如果找到了被 @Trans 标记的注解，则提取相关属性
                         repository = transAnno.repository();
                         // 处理 trans 属性值，优先使用注解直接定义的值，否则通过反射获取
-                        trans = StringUtils.isNotEmpty(transAnno.transKey()) ? transAnno.transKey() : (String) ReflectUtils.invokeAnnotation(annotationType, annotation,  Trans.TRANS_KEY_ATTR);
+                        trans = StrUtil.isNotEmpty(transAnno.transKey()) ? transAnno.transKey() : Try.of(() -> annotationType.getMethod(Trans.TRANS_KEY_ATTR).invoke(annotation)).map(obj -> (String) obj).getOrElse((String) null);
                         // 处理 key 属性值，同上
-                        key = StringUtils.isNotEmpty(transAnno.transField()) ? transAnno.transField() : (String) ReflectUtils.invokeAnnotation(annotationType, annotation,  Trans.TRANS_FIELD_ATTR);
+                        key = StrUtil.isNotEmpty(transAnno.transField()) ? transAnno.transField() : Try.of(() -> annotationType.getMethod(Trans.TRANS_FIELD_ATTR).invoke(annotation)).map(obj -> (String) obj).getOrElse((String) null);
                         // 保存实际的注解实例（可能是组合注解）
                         transAnnotation = annotation;
                         break; // 找到第一个匹配的就退出循环(因为最多只有1个)
@@ -161,7 +163,7 @@ public class TransClassMeta implements Serializable {
                 trans = transAnno.transKey();
                 key = transAnno.transField();
             }
-            if (StringUtils.isEmpty(trans)) {
+            if (StrUtil.isEmpty(trans)) {
                 // 没有翻译字段继续递归
                 continue;
             }
@@ -169,7 +171,7 @@ public class TransClassMeta implements Serializable {
                 //  如果翻译字段不存在 则跳过当前字段
                 continue;
             }
-            if (StringUtils.isEmpty(key)) {
+            if (StrUtil.isEmpty(key)) {
                 // 约定优于配置：提供合理的默认行为，如果key为空则使用字段名作为键值
                 // 例如   @Trans(trans = "userName", key = "userId", using = UserTransRepository.class)
                 // 等价于 @Trans(trans = "userName", using = UserTransRepository.class),若果不是userId,key可以直接省略,不是uId,那么就手动指定即可

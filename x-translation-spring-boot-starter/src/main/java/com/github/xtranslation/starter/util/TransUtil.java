@@ -32,17 +32,16 @@ public class TransUtil implements ApplicationContextAware {
     private static ApplicationContext applicationContext;
 
     /**
-     * 翻译工具方法（外观模式的体现，统一访问入口）
+     * 翻译工具方法（外观模式的体现，统一访问入口）,这里本质相当于注入service调用其中一个方法哈
      * <p>
      * 为调用者提供简化的翻译接口，隐藏了获取 TransService 实例和具体翻译实现的复杂性。
      * 调用者只需传入需要翻译的对象，即可完成翻译操作。
      * </p>
      *
      * @param obj 需要翻译的对象，可以是任何支持翻译的数据结构
-     * @return boolean 翻译是否成功，true 表示翻译成功，false 表示翻译失败
      */
-    public static boolean trans(Object obj) {
-        return TransServiceHolder.get().trans(obj);
+    public static void trans(Object obj) {
+        TransServiceHolder.get().trans(obj);
     }
 
     /**
