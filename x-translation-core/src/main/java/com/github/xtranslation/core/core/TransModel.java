@@ -2,14 +2,18 @@ package com.github.xtranslation.core.core;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.lang.Opt;
 import cn.hutool.core.util.ReflectUtil;
 import com.github.xtranslation.core.util.CollectionUtils;
+import io.vavr.control.Option;
 import lombok.Getter;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static io.vavr.API.*;
 
 /**
  * TransModel: 属性翻译模型
@@ -233,29 +237,18 @@ public class TransModel {
      * @return 适当类型的对象值容器
      */
     private Object getObjValue(List<Object> multipleTransVal) {
-        // 获取对象字段的值
+        // 获取字段当前值
         Object objValue = ReflectUtil.getFieldValue(this.obj, this.transFieldMeta.getField());
 
-        // 如果对象字段的值为空，则根据字段类型创建合适的容器
-        if (objValue == null) {
-            // 获取对象字段的类型
+        // 构造对应的对象值，如果已有则直接使用，否则根据类型创建新实例
+        return Option.of(objValue).getOrElse(() -> {
             Class<?> type = this.transFieldMeta.getField().getType();
-
-            // 如果字段类型是List，创建ArrayList实例
-            if ((List.class).isAssignableFrom(type)) {
-                objValue = new ArrayList<>();
-            }
-            // 如果字段类型是Set，创建HashSet实例
-            else if ((Set.class).isAssignableFrom(type)) {
-                objValue = new HashSet<>();
-            }
-            // 如果字段类型是数组，创建相应类型和大小的数组实例
-            else if (type.isArray()) {
-                // 创建一个新的数组实例，大小为多个转换值的大小
-                objValue = Array.newInstance(type.getComponentType(), multipleTransVal.size());
-            }
-        }
-        return objValue;
+            return Match(type).of(
+                    Case($(List.class::isAssignableFrom), new ArrayList<>()),
+                    Case($(Set.class::isAssignableFrom), new HashSet<>()),
+                    Case($(Class::isArray), Opt.ofNullable(type.getComponentType()).map(t -> Array.newInstance(t, multipleTransVal.size())).orElse(null)),
+                    Case($(), () -> null));
+        });
     }
 
 
