@@ -5,6 +5,8 @@ import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
+import java.util.function.Supplier;
+
 /**
  * TransUtil: 翻译工具类
  * <p>
@@ -103,5 +105,7 @@ public class TransUtil implements ApplicationContextAware {
             return INSTANCE;
         }
     }
+
+
 
 }

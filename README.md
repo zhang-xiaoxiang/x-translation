@@ -63,7 +63,7 @@ public @interface Trans {
 
 ## 二、优点
 
-1、核心源码简单，仅几百行，无任何依赖项；<br />
+1、核心源码简单，仅几百行，依赖项项少(了io.vavr、cn.hutool.core、lombok),<br />
 2、高度可拓展，拓展逻辑仅仅只需要实现TransRepository接口;<br />
 3、支持数据库翻译、字典翻译、集合翻译、嵌套翻译等;<br />
 4、并行翻译，翻译不同字段是并行翻译的，性能高<br />
