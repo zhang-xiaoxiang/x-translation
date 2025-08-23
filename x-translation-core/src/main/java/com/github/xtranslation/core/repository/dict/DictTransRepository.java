@@ -40,14 +40,8 @@ public class DictTransRepository implements TransRepository {
         // 使用Option处理dictLoader不为空且transAnno是DictTrans类型实例的情况
         return Option.of(dictLoader)
                 .filter(loader -> transAnno instanceof DictTrans)
-                .map(loader -> {
-                    DictTrans dictTrans = (DictTrans) transAnno;
-                    String group = dictTrans.group();
-                    // 使用Stream.of方法创建一个包含group的流，并收集为Map，键为group，值为通过dictLoader加载的字典
-                    Map<String, Map<String, String>> stringMap = Stream.of(group).collect(toMap(x -> x, dictLoader::loadDict));
-                    return (Map<Object, Object>) new HashMap<Object, Object>(stringMap);
-                })
-                .getOrElse(Collections.emptyMap());
+                // 使用Stream.of方法创建一个包含group的流，并收集为Map，键为group，值为通过dictLoader加载的字典
+                .map(loader -> (Map<Object, Object>) new HashMap<Object, Object>(Stream.of(((DictTrans) transAnno).group()).collect(toMap(x -> x, dictLoader::loadDict)))).getOrElse(Collections.emptyMap());
     }
 
 

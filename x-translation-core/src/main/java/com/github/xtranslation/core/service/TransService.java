@@ -24,6 +24,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+import static io.vavr.API.*;
+
 
 /**
  * TransService: 翻译服务类，用于将对象中的字段值翻译成其他格式。
@@ -123,22 +125,22 @@ public class TransService {
         // 将转换字段信息按仓库类分组
         Map<? extends Class<? extends TransRepository>, List<TransFieldMeta>> listMap = transFieldMetaList.stream().collect(Collectors.groupingBy(TransFieldMeta::getRepository));
 
-        // 如果分组数量大于1，表示有多个仓库类需要处理
-        if (listMap.size() > 1) {
-            // 使用CompletableFuture并发执行多个转换操作
-            CompletableFuture.allOf(
-                            // 遍历每个分组
-                            listMap.entrySet()
-                                    .stream()
-                                    .map(entry -> CompletableFuture.runAsync(() ->
-                                            // 递归调用doTrans方法处理每个分组
-                                            doTrans(needTransVOList, entry.getKey(), entry.getValue()), executor))
-                                    .toArray(CompletableFuture[]::new))
-                    .join();
-        } else {
-            // 如果分组数量不大于1，表示只有一个仓库类需要处理
-            listMap.forEach((transClass, transFields) -> doTrans(needTransVOList, transClass, transFields));
-        }
+        // 使用 Match 替代 if-else
+        Match(listMap.size() > 1).of(
+                Case($(true), () -> {
+                    // 使用CompletableFuture并发执行多个转换操作
+                    CompletableFuture.allOf(listMap.entrySet().stream().map(entry -> CompletableFuture.runAsync(() ->
+                                    // 递归调用doTrans方法处理每个分组
+                                    this.doTrans(needTransVOList, entry.getKey(), entry.getValue()), executor)).toArray(CompletableFuture[]::new))
+                            .join();
+                    return null;
+                }),
+                Case($(), () -> {
+                    // 如果分组数量不大于1，表示只有一个仓库类需要处理
+                    listMap.forEach((transClass, transFields) -> this.doTrans(needTransVOList, transClass, transFields));
+                    return null;
+                })
+        );
     }
 
 
@@ -196,19 +198,22 @@ public class TransService {
      * @param transMap        需要转换的模型映射，键为转换标识，值为模型列表
      */
     private void doTrans0(TransRepository transRepository, Map<String, List<TransModel>> transMap) {
+        boolean b = transMap.size() > 1;
         // 分组查询
-        if (transMap.size() > 1) {
-            // 说明有多个实体，异步查询
-            CompletableFuture<?>[] futures = transMap.values()
-                    .stream()
-                    .map(transModels -> CompletableFuture.runAsync(() -> doTrans(transRepository, transModels), executor))
-                    .toArray(CompletableFuture[]::new);
-            CompletableFuture.allOf(futures).join();
-
-        } else {
-            // 直接查询
-            transMap.values().forEach(transModels -> doTrans(transRepository, transModels));
-        }
+        Match(b).of(
+                Case($(b), () -> {
+                    CompletableFuture<?>[] futures = transMap.values()
+                            .stream()
+                            .map(transModels -> CompletableFuture.runAsync(() -> doTrans(transRepository, transModels), executor))
+                            .toArray(CompletableFuture[]::new);
+                    CompletableFuture.allOf(futures).join();
+                    return null; // Void方法需要返回null
+                }),
+                Case($(), () -> {
+                    transMap.values().forEach(transModels -> doTrans(transRepository, transModels));
+                    return null; // Void方法需要返回null
+                })
+        );
     }
 
     /**
