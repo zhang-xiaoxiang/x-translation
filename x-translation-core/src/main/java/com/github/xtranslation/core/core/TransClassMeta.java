@@ -6,16 +6,16 @@ import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.github.xtranslation.core.annotation.Trans;
 import com.github.xtranslation.core.repository.TransRepository;
+import io.vavr.Tuple;
+import io.vavr.Tuple4;
+import io.vavr.control.Option;
 import io.vavr.control.Try;
 
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
@@ -120,68 +120,135 @@ public class TransClassMeta implements Serializable {
         List<Field> declaredFields = CollUtil.toList(ReflectUtil.getFields(this.clazz));
         // 创建一个字段名称到字段对象的映射(如果出现重复键，默认保留旧值。)
         Map<String, Field> fieldNameMap = declaredFields.stream().collect(Collectors.toMap(Field::getName, x -> x, (o, n) -> o));
-        int mod;
-        List<TransFieldMeta> transFieldMetas = new ArrayList<>();
-        // 循环遍历所有的属性进行判断
-        for (Field field : declaredFields) {
-            mod = field.getModifiers();
-            // 如果是 static, final, volatile, transient 的字段，则直接跳过
-            if (Modifier.isStatic(mod) || Modifier.isFinal(mod) || Modifier.isVolatile(mod) || Modifier.isTransient(mod)) {
-                continue;
-            }
 
-            Trans transAnno = field.getAnnotation(Trans.class);
-            String trans = null;
-            String key = null;
-            Class<? extends TransRepository> repository = null;
-            Annotation transAnnotation = transAnno;
-            // 解析字段上的 Trans 注解，如果字段没有直接标注 Trans 注解，则检查其所有注解是否包含 Trans 注解
-            if (transAnno == null) {
-                // 获取字段上所有的直接注解
-                Annotation[] annotations = field.getDeclaredAnnotations();
-                // 处理嵌套注解的情况，即一个字段上可能有多个注解，其中一个或多个注解可能包含 @Trans 注解
-                for (Annotation annotation : annotations) {
-                    // 获取注解的类型
-                    Class<? extends Annotation> annotationType = annotation.annotationType();
-                    // 检查这个注解类型是否被 @Trans 注解标记
-                    transAnno = annotationType.getAnnotation(Trans.class);
-                    if (transAnno != null) {
-                        // 如果找到了被 @Trans 标记的注解，则提取相关属性
-                        repository = transAnno.repository();
-                        // 处理 trans 属性值，优先使用注解直接定义的值，否则通过反射获取
-                        trans = StrUtil.isNotEmpty(transAnno.transKey()) ? transAnno.transKey() : Try.of(() -> annotationType.getMethod(Trans.TRANS_KEY_ATTR).invoke(annotation)).map(obj -> (String) obj).getOrElse((String) null);
-                        // 处理 key 属性值，同上
-                        key = StrUtil.isNotEmpty(transAnno.transField()) ? transAnno.transField() : Try.of(() -> annotationType.getMethod(Trans.TRANS_FIELD_ATTR).invoke(annotation)).map(obj -> (String) obj).getOrElse((String) null);
-                        // 保存实际的注解实例（可能是组合注解）
-                        transAnnotation = annotation;
-                        break; // 找到第一个匹配的就退出循环(因为最多只有1个)
-                    }
-                }
-            } else {
-                // 如果字段有 Trans 注解，直接获取 trans、key 和 repository 属性
-                repository = transAnno.repository();
-                trans = transAnno.transKey();
-                key = transAnno.transField();
-            }
-            if (StrUtil.isEmpty(trans)) {
-                // 没有翻译字段继续递归
-                continue;
-            }
-            if (!fieldNameMap.containsKey(trans)) {
-                //  如果翻译字段不存在 则跳过当前字段
-                continue;
-            }
-            if (StrUtil.isEmpty(key)) {
-                // 约定优于配置：提供合理的默认行为，如果key为空则使用字段名作为键值
-                // 例如   @Trans(trans = "userName", key = "userId", using = UserTransRepository.class)
-                // 等价于 @Trans(trans = "userName", using = UserTransRepository.class),若果不是userId,key可以直接省略,不是uId,那么就手动指定即可
-                key = field.getName();
-            }
-            // 将解析到的Trans字段信息添加到列表中
-            transFieldMetas.add(new TransFieldMeta(field, fieldNameMap.get(trans), key, repository, transAnnotation));
-        }
+        // 使用函数式方式处理字段
+        List<TransFieldMeta> transFieldMetas = declaredFields.stream()
+                // 过滤特殊字段
+                .filter(field -> !isSpecialField(field))
+                // 转换为TransFieldMeta
+                .map(field -> createTransFieldMeta(field, fieldNameMap))
+                // 过滤掉null值
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
         // 构建Trans字段的解析树,也是处理嵌套翻译场景
         this.transFieldMetaList = buildTransTree(transFieldMetas);
+    }
+
+    /**
+     * 判断是否为特殊字段（static, final, volatile, transient）
+     *
+     * @param field 字段
+     * @return boolean 是否为特殊字段
+     */
+    private boolean isSpecialField(Field field) {
+        int mod = field.getModifiers();
+        return Modifier.isStatic(mod) || Modifier.isFinal(mod) || Modifier.isVolatile(mod) || Modifier.isTransient(mod);
+    }
+
+    /**
+     * 根据字段创建TransFieldMeta对象
+     *
+     * @param field        字段
+     * @param fieldNameMap 字段名称映射
+     * @return TransFieldMeta对象，如果字段不符合条件则返回null
+     */
+    private TransFieldMeta createTransFieldMeta(Field field, Map<String, Field> fieldNameMap) {
+        Trans transAnno = field.getAnnotation(Trans.class);
+
+        // 使用Vavr处理字段注解
+        Option<TransAnnotationResult> resultOption = Option.of(transAnno)
+                .fold(
+                        // 如果没有直接的Trans注解，则处理字段上的所有注解
+                        () -> Option.of(processFieldAnnotations(field)),
+                        // 如果有直接的Trans注解，则返回null（因为不需要处理嵌套注解）
+                        trans -> Option.none()
+                );
+
+        // 提取注解信息 - 简化处理逻辑
+        Option<Tuple4<Class<? extends TransRepository>, String, String, Annotation>> tupleOption =
+                resultOption.map(result -> Tuple.of(result.repository, result.trans, result.key, result.transAnnotation));
+
+        // 如果没有从嵌套注解中获取到信息，且字段上有直接的Trans注解
+        tupleOption = tupleOption.orElse(Option.of(transAnno).map(trans -> Tuple.of(trans.repository(), trans.transKey(), trans.transField(), trans)));
+
+
+        // 获取元组数据
+        Tuple4<Class<? extends TransRepository>, String, String, Annotation> annotationData =
+                tupleOption.getOrElse(Tuple.of(null, null, null, null));
+
+        Class<? extends TransRepository> repository = annotationData._1;
+        String trans = annotationData._2;
+        String key = annotationData._3;
+        Annotation transAnnotation = annotationData._4 != null ? annotationData._4 : transAnno;
+
+        // 验证必要条件并创建TransFieldMeta对象
+        return Option.of(trans)
+                .filter(t -> StrUtil.isNotEmpty(t) && fieldNameMap.containsKey(t))
+                .map(t -> {
+                    // 设置默认key值
+                    String finalKey = StrUtil.isEmpty(key) ? field.getName() : key;
+                    return new TransFieldMeta(field, fieldNameMap.get(t), finalKey, repository, transAnnotation);
+                })
+                .getOrElse((TransFieldMeta) null);
+    }
+
+    /**
+     * 处理字段上的所有注解，查找被 @Trans 注解标记的注解
+     * <p>
+     * 遍历字段上的所有注解，查找第一个被 @Trans 注解标记的注解，并提取相关属性
+     * </p>
+     *
+     * @param field 要处理的字段
+     * @return TransAnnotationResult 包含找到的 @Trans 注解信息，如果未找到则返回 null
+     */
+    private TransAnnotationResult processFieldAnnotations(Field field) {
+        // 获取字段上所有的直接注解
+        Annotation[] annotations = field.getDeclaredAnnotations();
+        // 使用Vavr处理嵌套注解的情况
+        return io.vavr.collection.List.of(annotations)
+                .find(annotation -> annotation.annotationType().getAnnotation(Trans.class) != null)
+                .map(annotation -> {
+                    Class<? extends Annotation> annotationType = annotation.annotationType();
+                    Trans transAnno = annotationType.getAnnotation(Trans.class);
+                    Class<? extends TransRepository> repository = transAnno.repository();
+
+                    // 处理 trans 属性值，优先使用注解直接定义的值，否则通过反射获取
+                    String trans = Option.of(transAnno.transKey())
+                            .filter(StrUtil::isNotEmpty)
+                            .getOrElse(() -> Try.of(() -> annotationType.getMethod(Trans.TRANS_KEY_ATTR).invoke(annotation))
+                                    .map(obj -> (String) obj)
+                                    .getOrElse((String) null));
+
+                    // 处理 key 属性值，同上
+                    String key = Option.of(transAnno.transField())
+                            .filter(StrUtil::isNotEmpty)
+                            .getOrElse(() -> Try.of(() -> annotationType.getMethod(Trans.TRANS_FIELD_ATTR).invoke(annotation))
+                                    .map(obj -> (String) obj)
+                                    .getOrElse((String) null));
+
+                    // 返回结果
+                    return new TransAnnotationResult(repository, trans, key, annotation);
+                })
+                .getOrElse((TransAnnotationResult) null);
+    }
+
+
+    /**
+     * 用于存储找到的 @Trans 注解信息的结果类
+     */
+    private static class TransAnnotationResult {
+        final Class<? extends TransRepository> repository;
+        final String trans;
+        final String key;
+        final Annotation transAnnotation;
+
+        TransAnnotationResult(Class<? extends TransRepository> repository, String trans, String key, Annotation transAnnotation) {
+            this.repository = repository;
+            this.trans = trans;
+            this.key = key;
+            this.transAnnotation = transAnnotation;
+        }
     }
 
     /**
