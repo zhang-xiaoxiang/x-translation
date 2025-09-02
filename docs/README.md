@@ -17,16 +17,7 @@
 
 <h3 align="center">x-translation</h3>
   <p align="center">
-    一款高性能的Java翻译插件
-    <br />
-    <a href="https://gitee.com/zhang-xiao-xiang/x-translation"><strong>探索本项目的文档 »</strong></a>
-    <br />
-    <br />
-    <a href="https://gitee.com/zhang-xiao-xiang/x-translation/blob/master/x-translation-core/src/test/java/com/github/xtranslation/core/service/TransServiceTest.java">查看Demo</a>
-    ·
-    <a href="https://gitee.com/zhang-xiao-xiang/x-translation/issues">报告Bug</a>
-    ·
-    <a href="https://gitee.com/zhang-xiao-xiang/x-translation/issues">提出新特性</a>
+一款性能中等儿偏下的java翻译解析插件
   </p>
 
 ## 目录
