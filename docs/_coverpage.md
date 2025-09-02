@@ -9,5 +9,5 @@
 
 
 
-[GitHub]([https://www.baidu.com/](https://gitee.com/zhang-xiao-xiang/x-translation))
+[GitHub]([https://gitee.com/zhang-xiao-xiang/x-translation])
 [开始使用](#README.md)
