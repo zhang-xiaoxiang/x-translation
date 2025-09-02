@@ -14,7 +14,7 @@
 <br />
 
 <p align="center">
-  <a href="[https://gitee.com/zhang-xiao-xiang/x-translation](https://github.com/zhang-xiaoxiang/x-translation)">
+  <a href="https://github.com/zhang-xiaoxiang/x-translatio">
     <img src="logo.png" alt="Logo" width="300" height="70">
   </a>
 
