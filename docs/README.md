@@ -6,7 +6,7 @@
 
 # x-translation
 
-一款性能中等儿偏下的java翻译解析插件
+一款性能中等儿偏下的java翻译插件
 
 <!-- PROJECT SHIELDS -->
 
@@ -18,7 +18,7 @@
 
 <h3 style="text-align: center;">x-translation</h3>
   <p style="text-align: center;">
-    一款性能中等儿偏下的java翻译解析插件
+    一款性能中等儿偏下的java翻译插件
     <br />
     <a href="https://gitee.com/zhang-xiao-xiang/x-translation"><strong>探索本项目的文档 »</strong></a>
     <br />
