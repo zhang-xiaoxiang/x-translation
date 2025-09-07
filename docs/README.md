@@ -14,9 +14,7 @@
 <br />
 
 <p style="text-align: center;">
-  <a href="https://gitee.com/zhang-xiao-xiang/x-translation">
-    <img src="logo.png" alt="Logo" width="882" height="161">
-  </a>
+
 
 <h3 style="text-align: center;">x-translation</h3>
   <p style="text-align: center;">
