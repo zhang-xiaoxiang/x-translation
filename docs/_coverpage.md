@@ -1,6 +1,6 @@
 
 ![logo](icon.png)
-> 一款性能中等儿偏下的Java数据解析插件
+> 一款性能中等儿偏下的java翻译插件
 
 - **x-translation**
 - 解析数据库字段  
