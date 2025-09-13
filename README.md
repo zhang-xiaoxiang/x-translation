@@ -1,6 +1,6 @@
 # x-translation
 
-一款性能中等儿偏下的java翻译解析插件
+一款性能中等儿偏下的java翻译插件
 
 <!-- PROJECT SHIELDS -->
 
@@ -14,7 +14,7 @@
 
 <h3 style="text-align: center;">x-translation</h3>
   <p style="text-align: center;">
-    一款性能中等儿偏下的java翻译解析插件
+    一款性能中等儿偏下的java翻译插件
     <br />
     <a href="https://gitee.com/zhang-xiao-xiang/x-translation"><strong>探索本项目的文档 »</strong></a>
     <br />
@@ -189,13 +189,13 @@ public Result<List<UserVO>> list() {
 
 @Test
 public void transOne() {
-    //1测试单个对象翻译
-    UserVO vo = new UserVO(1L, "张三", 2L, "1", "2");
+    //1 测试单个对象翻译
+    UserVO vo = new UserVO(1L, "张三", 1L, "1", "1");
     System.out.println("翻译前：" + JSONUtil.toJsonStr(vo));
     transService.trans(vo);
     System.out.println("翻译后：" + JSONUtil.toJsonStr(vo));
-    //翻译前：{"id":1,"name":"张三","sex":"1","job":"2","teacherId":2}
-    //翻译后：{"id":1,"name":"张三","sex":"1","job":"2","teacherId":2,"subjectId":2,"sexName":"男","jobName":"2号职务","teacherName":"2号老师","subjectName":"科目2"}
+    // 翻译前：{"id":1,"name":"张三","sex":"1","job":"1","teacherId":1}
+    // 翻译后：{"id":1,"name":"张三","sex":"1","job":"1","teacherId":1,"subjectId":1,"sexName":"男","jobName":"1号职务","teacherName":"1号老师","subjectName":"科目1"}
 }
 ```
 
@@ -205,17 +205,17 @@ public void transOne() {
 
 @Test
 public void transList() {
-    // 2测试列表对象翻译
+    //2 测试列表对象翻译
     List<UserVO> userList = new ArrayList<>();
-    UserVO user1 = new UserVO(1L, "张三", 2L, "1", "2");
-    UserVO user2 = new UserVO(2L, "李四", 1L, "2", "1");
+    UserVO user1 = new UserVO(1L, "张三", 1L, "1", "1");
+    UserVO user2 = new UserVO(2L, "李四", 2L, "2", "2");
     userList.add(user1);
     userList.add(user2);
     System.out.println("翻译前：" + JSONUtil.toJsonStr(userList));
     transService.trans(userList);
     System.out.println("翻译后：" + JSONUtil.toJsonStr(userList));
-    // 翻译前：[{"id":1,"name":"张三","sex":"1","job":"2","teacherId":2},{"id":2,"name":"李四","sex":"2","job":"1","teacherId":1}]
-    // 翻译后：[{"id":1,"name":"张三","sex":"1","job":"2","teacherId":2,"subjectId":2,"sexName":"男","jobName":"2号职务","teacherName":"2号老师","subjectName":"科目2"},{"id":2,"name":"李四","sex":"2","job":"1","teacherId":1,"subjectId":1,"sexName":"女","jobName":"1号职务","teacherName":"1号老师","subjectName":"科目1"}]
+    // 翻译前：{"id":1,"name":"张三","sex":"1","job":"1","teacherId":1}
+    // 翻译后：{"id":1,"name":"张三","sex":"1","job":"1","teacherId":1,"subjectId":1,"sexName":"男","jobName":"1号职务","teacherName":"1号老师","subjectName":"科目1"}
 }
 ```
 
@@ -225,15 +225,15 @@ public void transList() {
 
 @Test
 public void transNested() {
-    // 3测试嵌套对象翻译)
-    UserVO user = new UserVO(1L, "张三", 2L, "1", "2");
+    //3 测试嵌套对象翻译
+    UserVO user = new UserVO(1L, "张三", 1L, "1", "1");
     Result<UserVO> result = Result.success(user);
     // Result<List<UserVO>>列表嵌套同理
     System.out.println("翻译前：" + JSONUtil.toJsonStr(result));
     transService.trans(result);
     System.out.println("翻译后：" + JSONUtil.toJsonStr(result));
-    // 翻译前：{"code":"0","message":"成功","data":{"id":1,"name":"张三","sex":"1","job":"2","teacherId":2}}
-    // 翻译后：{"code":"0","message":"成功","data":{"id":1,"name":"张三","sex":"1","job":"2","teacherId":2,"subjectId":2,"sexName":"男","jobName":"2号职务","teacherName":"2号老师","subjectName":"科目2"}}
+    // 翻译前：{"code":"0","message":"成功","data":{"id":1,"name":"张三","sex":"1","job":"1","teacherId":1}}
+    // 翻译后：{"code":"0","message":"成功","data":{"id":1,"name":"张三","sex":"1","job":"1","teacherId":1,"subjectId":1,"sexName":"男","jobName":"1号职务","teacherName":"1号老师","subjectName":"科目1"}}
 }
 ```
 
